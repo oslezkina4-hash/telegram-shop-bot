@@ -1,0 +1,33 @@
+name: Run Telegram Bot
+
+on:
+  schedule:
+    # Запуск каждые 6 часов (в 00:00, 06:00, 12:00, 18:00 UTC)
+    - cron: '0 */6 * * *'
+  workflow_dispatch: # позволяет запустить вручную кнопкой на GitHub
+
+jobs:
+  run-bot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350 # чуть меньше 6 часов, чтобы не упереться в лимит GitHub
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run bot
+        env:
+          BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+          ADMIN_ID: ${{ secrets.ADMIN_ID }}
+          WEB_APP_URL: ${{ secrets.WEB_APP_URL }}
+        run: timeout 20700s npm start || true
+        # 20700 секунд = 5ч 45мин — бот работает почти все 6 часов,
+        # затем сам завершается, и по расписанию стартует заново
